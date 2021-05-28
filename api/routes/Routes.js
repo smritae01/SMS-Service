@@ -5,10 +5,10 @@ module.exports = function(app) {
 
   // prod Routes
   app.route('/inbound/sms')
-    .put(prod.sms_task)
+    .put(prod.sms_intask)
 
 
   app.route('/outbound/sms')
-  .put(prod.sms_task)
+  .put(prod.sms_outtask)
 
 };
