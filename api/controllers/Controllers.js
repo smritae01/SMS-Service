@@ -22,10 +22,10 @@ exports.sms_task = function(req, res) {
     const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
     const [username, password] = credentials.split(':');
     var msg;
-    const user = process.env.USERNAME;
-    const pass = process.env.PASSWORD;
+    const userr = process.env.TEST_USERNAME;
+    const pass = process.env.TEST_PASSWORD;
     
-    if (username === user && password === pass) {
+    if (username === userr && password === pass) {
       msg = 'Authorization granted!';
     }else{
         return res.status(401).json({ message: 'Invalid Authentication Credentials' });
