@@ -1,3 +1,5 @@
+const dotenv = require("dotenv");
+dotenv.config();
 'use strict';
 
 const axios = require('axios');
@@ -12,6 +14,24 @@ client.on("error", (error) => {
 
 exports.sms_task = function(req, res) {
 
+  if (!req.headers.authorization || req.headers.authorization.indexOf('Basic ') === -1) {
+        return res.status(401).json({ message: 'Missing Authorization Header' });
+    }
+
+    const base64Credentials =  req.headers.authorization.split(' ')[1];
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+    const [username, password] = credentials.split(':');
+    var msg;
+    const user = process.env.USERNAME;
+    const pass = process.env.PASSWORD;
+    
+    if (username === user && password === pass) {
+      msg = 'Authorization granted!';
+    }else{
+        return res.status(401).json({ message: 'Invalid Authentication Credentials' });
+    }
+
+
    try {
      var temp = req.body;
      var foodItem = temp.fooditem;
@@ -20,6 +40,7 @@ exports.sms_task = function(req, res) {
      client.get(foodItem, async (err, recipe) => {
        if (recipe) {
          return res.status(200).send({
+           auth : msg,
            error: false,
            message: `Recipe for ${foodItem} from the cache`,
            data: JSON.parse(recipe)
@@ -33,6 +54,7 @@ exports.sms_task = function(req, res) {
 
            // return the result to the client
            return res.status(200).send({
+             auth : msg,
              error: false,
              message: `Recipe for ${foodItem} from the server`,
              data: recipe.data.results
