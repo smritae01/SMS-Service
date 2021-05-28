@@ -3,7 +3,7 @@ dotenv.config();
 'use strict';
 
 const axios = require('axios');
-
+var async = require("async");
 const redis = require('redis');
 
 const client = redis.createClient(6379);
@@ -110,7 +110,13 @@ exports.sms_intask = function(req, res) {
          message: ``,
        })
      }
-     else if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
+    else if(text == "STOP" || text == "STOP\r" || text == "STOP\n" || text == "STOP\r\n"){
+        client.setex('from', 14400, temp.from);
+        client.setex('to', 14400, temp.to);
+        client.setex('text', 14400, temp.text);
+        console.log(text.localeCompare("STOP"))
+      }
+     if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
        return res.status(200).send({
          auth: auth_msg,
          error: ``,
@@ -124,10 +130,6 @@ exports.sms_intask = function(req, res) {
        })
      }
 
-     if(text == "STOP" || text == "STOP\r" || text == "STOP\n" || text == "STOP\r\n"){
-       client.setex(from_ent, 14400, from);
-       client.setex(to_ent, 14400, to);
-     }
 
    } catch (error) {
        console.log(error)
@@ -157,7 +159,7 @@ exports.sms_outtask = function(req, res) {
     }
 //AUTHORIZATION DONE
 
-   try {
+  try {
 
      var temp = req.body;
      var from = temp.from;
@@ -233,33 +235,45 @@ exports.sms_outtask = function(req, res) {
          message: ``,
        })
      }
-     var flag;
-     //Check the redis store for the data first
-     client.get(from_ent, async (err, from) => {
-       if (from) {
-         flag=1;
-       }
-     })
-     client.get(to_ent, async (err, to) => {
-       if (to && flag==1) {
-         return res.status(403).send({
-             auth : msg,
-             error: `sms from ${from} and to ${to} blocked by STOP request`,
-             message:``,
-           })
-       }
-     })
 
-     // var cache_from = client.get(from_ent)
-     // var cache_to = client.get(to_ent)
+     //CHECKING THE CACHE IN CASE OF STOP REQUEST
+
      //
-     // if(from == cache_from && to == cache_to){
-     //   return res.status(403).send({
-     //     auth : msg,
-     //     error: `sms from ${cache_from} and to ${cache_to} blocked by STOP request`,
-     //     message:``,
-     //   })
+     // if(from && to){
+     //   client.get('text', (err, value) => {
+     //        if (err) {
+     //          throw err;
+     //        }
+     //          console.log('Value:', value);
+     //          if(value == "STOP" || value == "STOP\r" || value == "STOP\n" || value == "STOP\r\n"){
+     //            res.json({
+     //              auth : msg,
+     //              error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
+     //              message:``,
+     //            });
+     //          }
+     //        })
      // }
+
+     client.get('from', (err, value) => {
+          if (err) {
+            throw err;
+          }
+            console.log('fromValue:', value);
+            client.get('to', (err, value1) => {
+                 if (err) {
+                   throw err;
+                 }
+                   console.log('toValue:', value1);
+                   if(value == temp.from && value1 == temp.to){
+                     res.json({
+                       auth : msg,
+                       error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
+                       message:``,
+                     });
+                   }
+               });
+        });
 
      if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
        return res.status(200).send({
