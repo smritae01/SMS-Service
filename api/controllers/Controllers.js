@@ -3,7 +3,6 @@ dotenv.config();
 'use strict';
 
 const axios = require('axios');
-var async = require("async");
 const redis = require('redis');
 const moment = require('moment');
 const client = redis.createClient(6379);
@@ -120,7 +119,7 @@ exports.sms_intask = function(req, res) {
         'startTime': moment().unix()
         }
         client.set('reqs',JSON.stringify(body));
-        console.log('Heyyy ', body)
+        // console.log('Heyyy ', body)
 
       }
      if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
@@ -259,7 +258,7 @@ exports.sms_outtask = function(req, res) {
                    }
                      // console.log('toValue:', value1);
                      if(value == temp.from && value1 == temp.to){
-                       res.json({
+                       return res.status(403).send({
                          auth : msg,
                          error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
                          message:``,
@@ -288,8 +287,8 @@ exports.sms_outtask = function(req, res) {
                              }
                              if(difference < 1) {
                                // console.log(data.count)
-                               if(data.count >= 50) {
-                                 return res.json({error: `limit reached for from ${value}`, message: ``})
+                               if(data.count > 50) {
+                                 return res.status(429).send({error: `limit reached for from ${temp.from}`, message: ``})
                                }else{
                                  data.count++
                                  client.set('reqs',JSON.stringify(data))
