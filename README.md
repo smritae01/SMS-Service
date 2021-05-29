@@ -54,7 +54,7 @@ A Simple SMS API service that exposes the following 2 APIs that accepts JSON dat
 `redis-server`
 
 - Optional : Check whether redis server is running perfectly by executing `redis-cli ping` on a new tab.\
-  You should receive PONG as the response.\
+  You should receive `PONG` as the response.
 
 - Start NodeJS server at http://localhost:3000 in the terminal
 
