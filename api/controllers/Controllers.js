@@ -114,7 +114,7 @@ exports.sms_intask = function(req, res) {
         client.setex('from', 14400, temp.from);
         client.setex('to', 14400, temp.to);
         client.setex('text', 14400, temp.text);
-        console.log(text.localeCompare("STOP"))
+        // console.log(text.localeCompare("STOP"))
       }
      if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
        return res.status(200).send({
@@ -238,49 +238,34 @@ exports.sms_outtask = function(req, res) {
 
      //CHECKING THE CACHE IN CASE OF STOP REQUEST
 
-     //
-     // if(from && to){
-     //   client.get('text', (err, value) => {
-     //        if (err) {
-     //          throw err;
-     //        }
-     //          console.log('Value:', value);
-     //          if(value == "STOP" || value == "STOP\r" || value == "STOP\n" || value == "STOP\r\n"){
-     //            res.json({
-     //              auth : msg,
-     //              error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
-     //              message:``,
-     //            });
-     //          }
-     //        })
-     // }
-
-     client.get('from', (err, value) => {
-          if (err) {
-            throw err;
-          }
-            console.log('fromValue:', value);
-            client.get('to', (err, value1) => {
-                 if (err) {
-                   throw err;
-                 }
-                   console.log('toValue:', value1);
-                   if(value == temp.from && value1 == temp.to){
-                     res.json({
-                       auth : msg,
-                       error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
-                       message:``,
-                     });
-                   }
-               });
-        });
-
      if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
-       return res.status(200).send({
-         auth: auth_msg,
-         error: ``,
-         message: `outbound sms is ok!`,
-       })
+
+       client.get('from', (err, value) => {
+            if (err) {
+              throw err;
+            }
+              // console.log('fromValue:', value);
+              client.get('to', (err, value1) => {
+                   if (err) {
+                     throw err;
+                   }
+                     // console.log('toValue:', value1);
+                     if(value == temp.from && value1 == temp.to){
+                       res.json({
+                         auth : msg,
+                         error: `sms from ${temp.from} and to ${temp.to} blocked by STOP request`,
+                         message:``,
+                       });
+                     } else{
+                       return res.status(200).send({
+                         auth: auth_msg,
+                         error: ``,
+                         message: `outbound sms is ok!`,
+                       });
+                     }
+                 });
+          });
+
      }
 
    } catch (error) {
