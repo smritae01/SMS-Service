@@ -5,12 +5,13 @@ dotenv.config();
 const axios = require('axios');
 var async = require("async");
 const redis = require('redis');
-
+const moment = require('moment');
 const client = redis.createClient(6379);
 
 client.on("error", (error) => {
  console.error(error);
 });
+
 
 //FUNCTION FOR INBOUND SMS
 exports.sms_intask = function(req, res) {
@@ -114,9 +115,16 @@ exports.sms_intask = function(req, res) {
         client.setex('from', 14400, temp.from);
         client.setex('to', 14400, temp.to);
         client.setex('text', 14400, temp.text);
-        // console.log(text.localeCompare("STOP"))
+        let body = {
+        'count': 0,
+        'startTime': moment().unix()
+        }
+        client.set('reqs',JSON.stringify(body));
+        console.log('Heyyy ', body)
+
       }
      if(text.length>=1 && text.length<=120 && from.length>=6 && from.length<=16 && to.length>=6 && to.length<=16){
+
        return res.status(200).send({
          auth: auth_msg,
          error: ``,
@@ -257,11 +265,54 @@ exports.sms_outtask = function(req, res) {
                          message:``,
                        });
                      } else{
-                       return res.status(200).send({
-                         auth: auth_msg,
-                         error: ``,
-                         message: `outbound sms is ok!`,
-                       });
+
+                       client.exists('from',(err,reply) => {
+                         if(err) {
+                           console.log("Redis not working...")
+                           system.exit(0)
+                         }
+                         if(reply === 1) {
+                           // user exists
+                           // check time interval
+                           client.get('reqs',(err,resp) => {
+                             let data = JSON.parse(resp)
+                             let currentTime = moment().unix()
+                             let difference = (currentTime - data.startTime)/(60*60)
+                             if(difference >= 1) {
+                               let body = {
+                                 'count': 1,
+                                 'startTime': moment().unix()
+                               }
+                               client.set('reqs',JSON.stringify(body))
+
+                             }
+                             if(difference < 1) {
+                               // console.log(data.count)
+                               if(data.count >= 50) {
+                                 return res.json({error: `limit reached for from ${value}`, message: ``})
+                               }else{
+                                 data.count++
+                                 client.set('reqs',JSON.stringify(data))
+
+                                 return res.status(200).send({
+                                   auth: auth_msg,
+                                   error: ``,
+                                   message: `outbound sms is ok!`,
+                                 });
+                               }
+                             }
+                           })
+                         } else {
+                           // add new user
+                           let body = {
+                             'count': 1,
+                             'startTime': moment().unix()
+                           }
+                           client.set('reqs',JSON.stringify(body))
+
+                         }
+                       })
+
                      }
                  });
           });
