@@ -4,15 +4,15 @@ dotenv.config();
 
 const redis = require('redis');
 const moment = require('moment');
-// const client = redis.createClient(6379);
+var client;
 
 if (process.env.REDIS_URL) {
   var rtg   = require("url").parse(process.env.REDIS_URL);
-  const client = redis.createClient(rtg.port, rtg.hostname);
+   client = redis.createClient(rtg.port, rtg.hostname);
   client.auth(rtg.auth.split(":")[1]);
 
 } else {
-  const client = redis.createClient(6379);
+   client = redis.createClient(6379);
 }
 
 client.on("error", (error) => {
