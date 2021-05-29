@@ -2,7 +2,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 'use strict';
 
-const axios = require('axios');
 const redis = require('redis');
 const moment = require('moment');
 const client = redis.createClient(6379);
